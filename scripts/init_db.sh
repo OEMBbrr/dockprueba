@@ -6,22 +6,15 @@ echo "POSTGRES_USER: $POSTGRES_USER"
 echo "POSTGRES_DB: $POSTGRES_DB"
 echo "DATABASE_URL: $DATABASE_URL"
 
-# Usamos template1 porque siempre existe en PostgreSQL
-until PGPASSWORD=$POSTGRES_PASSWORD psql -h db -U $POSTGRES_USER -d template1 -c 'SELECT 1'; do
-  echo "⏳ Error al conectar, reintentando en 1 segundo..."
+until pg_isready -h db -U $POSTGRES_USER -d $POSTGRES_DB; do
+  >&2 echo "⏳ Postgres no está listo - esperando 1 segundo..."
   sleep 1
 done
 
-echo "✅ PostgreSQL listo. Ejecutando migraciones..."
+echo "✅ PostgreSQL listo. Ejecutando migraciones (si las hubiera)..."
+alembic upgrade head || echo "⚠️  No hay migraciones, se crearán las tablas mediante seed."
 
-# Intentar aplicar migraciones existentes
-alembic upgrade head || {
-  echo "⚠️  No hay migraciones aplicadas. Generando migración inicial..."
-  alembic revision --autogenerate -m "initial"
-  alembic upgrade head
-}
-
-echo "🌱 Sembrando datos de ejemplo..."
+echo "🌱 Sembrando datos de ejemplo (las tablas se crearán automáticamente si no existen)..."
 python scripts/seed_db.py
 
 echo "🚀 Iniciando servidor..."

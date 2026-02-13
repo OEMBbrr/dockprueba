@@ -10,7 +10,7 @@ class Category(Base):
     name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
     description: Mapped[Optional[str]] = mapped_column(String(500))
     parent_id: Mapped[Optional[int]] = mapped_column(ForeignKey("categories.id"))
-    niche_specialization: Mapped[Optional[dict]] = mapped_column(JSON)  # vocabulario visual, clichés
+    niche_specialization: Mapped[Optional[dict]] = mapped_column(JSON)
 
     parent: Mapped[Optional["Category"]] = relationship(remote_side=[id])
     children: Mapped[List["Category"]] = relationship(back_populates="parent")

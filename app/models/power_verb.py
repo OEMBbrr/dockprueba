@@ -1,5 +1,6 @@
 from sqlalchemy import String, Integer
 from sqlalchemy.orm import Mapped, mapped_column
+from typing import Optional
 from .base import Base
 
 class PowerVerb(Base):

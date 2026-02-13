@@ -10,7 +10,7 @@ class ViralPattern(Base):
     category_id: Mapped[int] = mapped_column(ForeignKey("categories.id"))
     name: Mapped[str] = mapped_column(String(100), nullable=False)
     pattern_template: Mapped[str] = mapped_column(String(500), nullable=False)
-    psychological_triggers: Mapped[Optional[dict]] = mapped_column(JSON)  # lista de triggers
+    psychological_triggers: Mapped[Optional[dict]] = mapped_column(JSON)
     ctr_range_min: Mapped[Optional[float]]
     ctr_range_max: Mapped[Optional[float]]
     avg_multiplier: Mapped[Optional[float]]

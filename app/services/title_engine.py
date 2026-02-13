@@ -1,7 +1,24 @@
+import json
+from typing import Any, Optional
 from sqlalchemy.orm import Session
 from app.models import ViralPattern, TitleExample
 from app.schemas.title import TitleGenerationRequest
-import json
+
+def safe_json_parse(data: Any) -> Any:
+    """
+    Convierte un campo JSON de la base de datos a un objeto Python.
+    Si ya es dict/list, lo devuelve; si es string, lo parsea con json.loads.
+    """
+    if data is None:
+        return None
+    if isinstance(data, (dict, list)):
+        return data
+    if isinstance(data, str):
+        try:
+            return json.loads(data)
+        except json.JSONDecodeError:
+            return data  # fallback: devolver el string original
+    return data  # otro tipo, devolver tal cual
 
 class TitleEngine:
     @staticmethod
@@ -13,12 +30,11 @@ class TitleEngine:
 
         scored = []
         for p in patterns:
-            triggers = p.psychological_triggers
+            triggers = safe_json_parse(p.psychological_triggers)
             score = 0
-            if triggers:
-                trig_list = json.loads(triggers) if isinstance(triggers, str) else triggers
+            if triggers and isinstance(triggers, list):
                 for t in request.target_emotions:
-                    if t in trig_list:
+                    if t in triggers:
                         score += 10
             scored.append((p, score))
 
@@ -55,7 +71,7 @@ class TitleEngine:
                 "examples": example_texts,
                 "estimated_ctr": f"{pattern.ctr_range_min}-{pattern.ctr_range_max}%",
                 "avg_multiplier": pattern.avg_multiplier,
-                "psychological_triggers": json.loads(pattern.psychological_triggers) if pattern.psychological_triggers else [],
+                "psychological_triggers": safe_json_parse(pattern.psychological_triggers) or [],
                 "score": score
             })
         return generated

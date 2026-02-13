@@ -2,7 +2,8 @@ import sys
 from pathlib import Path
 sys.path.append(str(Path(__file__).parent.parent))
 
-from app.database import SessionLocal
+from app.database import SessionLocal, engine
+from app.models import Base
 from app.models import (
     Category, ViralPattern, TitleExample, ThumbnailCopy,
     DescriptionTemplate, Archetype, PowerVerb, TechnicalNoun,
@@ -12,16 +13,19 @@ from app.models import (
 import json
 
 def seed():
+    # Crear todas las tablas si no existen (solución pragmática)
+    Base.metadata.create_all(bind=engine)
+
     db = SessionLocal()
     try:
-        # 1. CATEGORÍAS
+        # 1. CATEGORÍAS (sin json.dumps, pasar dict directamente)
         cat_racing = Category(
             name="RACING_TECH_OUTLIERS",
             description="Tecnología de competición con potencial outlier",
-            niche_specialization=json.dumps({
+            niche_specialization={
                 "visual_vocabulary": ["corte técnico", "flujo aerodinámico", "materiales expuestos"],
                 "forbidden_cliches": ["llamas", "coches volando"]
-            })
+            }
         )
         cat_performance = Category(name="PERFORMANCE_REVIEWS", description="Reviews de coches de altas prestaciones")
         cat_historical = Category(name="HISTORICAL_SECRETS", description="Secretos e historias no contadas de la automoción")
@@ -29,12 +33,12 @@ def seed():
         db.add_all([cat_racing, cat_performance, cat_historical, cat_technical])
         db.commit()
 
-        # 2. PATRONES VIRALES (extraídos de Copy3.txt y Copy5.txt)
+        # 2. PATRONES VIRALES
         pattern1 = ViralPattern(
             category_id=cat_racing.id,
             name="Tecnología Prohibida",
             pattern_template="El [Sistema/Componente] de [Marca] que fue BANEADO en [Tiempo] por [Razón Técnica]",
-            psychological_triggers=json.dumps(["Controversia", "Tabú técnico", "Ingenio prohibido"]),
+            psychological_triggers=["Controversia", "Tabú técnico", "Ingenio prohibido"],
             ctr_range_min=18.0,
             ctr_range_max=30.0,
             avg_multiplier=18.5,
@@ -46,7 +50,7 @@ def seed():
             category_id=cat_historical.id,
             name="Secreto Histórico",
             pattern_template="El [Prototipo/Proyecto] de [Marca] que NUNCA Vio la Luz por [Razón]",
-            psychological_triggers=json.dumps(["Misterio", "Historia oculta", "Qué pasaría si"]),
+            psychological_triggers=["Misterio", "Historia oculta", "Qué pasaría si"],
             ctr_range_min=16.0,
             ctr_range_max=26.0,
             avg_multiplier=16.2,
@@ -57,7 +61,7 @@ def seed():
             category_id=cat_racing.id,
             name="Giant Slayer",
             pattern_template="Cómo [Underdog] DESTROZÓ a [Gigante] en [Competición]",
-            psychological_triggers=json.dumps(["Underdog", "Justicia", "Humillación"]),
+            psychological_triggers=["Underdog", "Justicia", "Humillación"],
             ctr_range_min=17.0,
             ctr_range_max=28.0,
             avg_multiplier=17.3,
@@ -72,16 +76,16 @@ def seed():
             viral_pattern_id=pattern1.id,
             title_text="El Sistema de Suspensión Hidráulica de Williams que Fue Prohibido por Ser Demasiado Inteligente (1993)",
             ctr_estimate=24.5,
-            emotional_triggers=json.dumps(["Controversia", "Admiración"]),
-            technical_specs=json.dumps(["suspensión hidráulica", "Williams FW15C"]),
+            emotional_triggers=["Controversia", "Admiración"],
+            technical_specs=["suspensión hidráulica", "Williams FW15C"],
             source_channel="Chain Bear"
         )
         ex2 = TitleExample(
             viral_pattern_id=pattern2.id,
             title_text="El Hypercar de Yamaha que Podría Haber Cambiado Todo (Proyecto OX99-11, 1992)",
             ctr_estimate=22.1,
-            emotional_triggers=json.dumps(["Nostalgia", "Misterio"]),
-            technical_specs=json.dumps(["OX99-11", "V12", "3.5L"]),
+            emotional_triggers=["Nostalgia", "Misterio"],
+            technical_specs=["OX99-11", "V12", "3.5L"],
             source_channel="Donut Media"
         )
         db.add_all([ex1, ex2])
@@ -130,7 +134,7 @@ def seed():
                 "#hashtags"
             ),
             retention_boost=48.0,
-            sections=json.dumps(["Hook", "DataProof", "Chapters", "Equipment", "CTA", "Hashtags"])
+            sections=["Hook", "DataProof", "Chapters", "Equipment", "CTA", "Hashtags"]
         )
         db.add(desc1)
         db.commit()
@@ -140,15 +144,15 @@ def seed():
             name="FORBIDDEN_FRUIT",
             emotional_trigger="Curiosity & Authority Challenge",
             syntax_template="The [Adjective] Car that [Authority] Tried to Hide/Ban",
-            power_verbs=json.dumps(["Banned", "Hidden", "Censored", "Erased"]),
-            amplifiers=json.dumps(["Secretly", "Illegally", "Forever"])
+            power_verbs=["Banned", "Hidden", "Censored", "Erased"],
+            amplifiers=["Secretly", "Illegally", "Forever"]
         )
         arch2 = Archetype(
             name="GIANT_SLAYER",
             emotional_trigger="Justice & Underdog Bias",
             syntax_template="How [Underdog] Humiliated/Destroyed [Giant]",
-            power_verbs=json.dumps(["Humiliated", "Destroyed", "Massacred", "Crushed"]),
-            amplifiers=json.dumps(["Instantly", "Brutally", "Completely"])
+            power_verbs=["Humiliated", "Destroyed", "Massacred", "Crushed"],
+            amplifiers=["Instantly", "Brutally", "Completely"]
         )
         db.add_all([arch1, arch2])
         db.commit()
@@ -205,13 +209,13 @@ def seed():
             PlatformSyntax(
                 platform_name="Midjourney",
                 syntax_template="/imagine prompt: [Subject] + [Environment] + [Lighting/Mood] + [Camera/Lens] --ar 16:9 --stylize 250 --v 6.0 --style raw",
-                forbidden_words=json.dumps(["text in image", "HDR", "4k", "8k"]),
+                forbidden_words=["text in image", "HDR", "4k", "8k"],
                 notes="Usar --iw 2.0 si hay imagen de referencia"
             ),
             PlatformSyntax(
                 platform_name="DALL-E 3",
                 syntax_template="Detailed descriptive paragraph focusing on literal visual elements + 'The text \"[TEXT]\" is clearly visible in [font style]'.",
-                forbidden_words=json.dumps([]),
+                forbidden_words=[],
                 notes="Usar lenguaje natural, evitar jerga técnica"
             ),
         ]
@@ -233,7 +237,7 @@ def seed():
         workflow = ProductionWorkflow(
             name="Flujo Estándar OEMB",
             description="Flujo de producción con rama de referencia visual opcional",
-            steps=json.dumps(workflow_steps)
+            steps=workflow_steps
         )
         db.add(workflow)
         db.commit()
